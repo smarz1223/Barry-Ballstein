@@ -140,17 +140,12 @@ def fetch_batter_stats():
         team = list(row.values())[0]
         if not team or team.lower() in ["team name", "totals", ""]:
             continue
-        # Calculate singles
-        h   = sf(row.get("H", 0))
-        b2  = sf(row.get("2B", 0))
-        b3  = sf(row.get("3B", 0))
-        hr  = sf(row.get("HR", 0))
-        b1  = h - b2 - b3 - hr
-        pts = (b1 * BAT_MULT["1B"] +
-               sf(row.get("R",   0)) * BAT_MULT["R"]  +
-               b2                    * BAT_MULT["2B"] +
-               b3                    * BAT_MULT["3B"] +
-               hr                    * BAT_MULT["HR"] +
+        # Yahoo headtoheadstats provides 1B directly (not H)
+        pts = (sf(row.get("R",   0)) * BAT_MULT["R"]   +
+               sf(row.get("1B",  0)) * BAT_MULT["1B"]  +
+               sf(row.get("2B",  0)) * BAT_MULT["2B"]  +
+               sf(row.get("3B",  0)) * BAT_MULT["3B"]  +
+               sf(row.get("HR",  0)) * BAT_MULT["HR"]  +
                sf(row.get("RBI", 0)) * BAT_MULT["RBI"] +
                sf(row.get("SB",  0)) * BAT_MULT["SB"]  +
                sf(row.get("BB",  0)) * BAT_MULT["BB"]  +
@@ -279,7 +274,13 @@ def build_league_data(bat_stats, pit_stats):
 def update_html(league_data):
     print("\n[HTML] Updating dashboard...")
 
-    html_path = "barry_ballstein.html"
+    # Support both filename conventions
+    import glob
+    candidates = ["barry_ballstein.html", "barry_ballstein_VGoLive.html"] + glob.glob("barry_ballstein*.html")
+    html_path = next((f for f in candidates if os.path.exists(f)), None)
+    if not html_path:
+        print(f"  ERROR: No barry_ballstein*.html found. Files present: {os.listdir()}")
+        return False
     if not os.path.exists(html_path):
         print(f"  ERROR: {html_path} not found. Run from repo root.")
         return False
