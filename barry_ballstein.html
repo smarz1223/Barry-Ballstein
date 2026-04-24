@@ -651,7 +651,7 @@ def update_html(league, weekly, matchups, player_bat, player_pit, stats_tables):
     # Update week badge and timestamp
     ts = datetime.now(timezone.utc).strftime('%b %d %Y %H:%M UTC')
     html = re.sub(r'2026 &middot; Week \d+', f'2026 &middot; Week {CURRENT_WEEK}', html)
-    html = re.sub(r'Live from Yahoo Fantasy &middot; Updated Apr 24 2026 20:29 UTC<)', f'Live from Yahoo Fantasy &middot; Updated Apr 24 2026 20:29 UTC< 2:
+    html = re.sub(r'Live from Yahoo Fantasy &middot; Updated Apr 24 2026 20:33 UTC<)', f'Live from Yahoo Fantasy &middot; Updated Apr 24 2026 20:33 UTC< 2:
             raise ValueError(f"Only {weeks_found} weeks found in scoreboard")
         print(f"  Scoreboard: {weeks_found} weeks of data")
     except Exception as e:
