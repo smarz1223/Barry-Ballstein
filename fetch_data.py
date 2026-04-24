@@ -242,8 +242,10 @@ def fetch_scoreboard():
 def clean_name(raw):
     if not raw: return ""
     s = re.sub(r'[\ue000-\uf8ff\n\r]', ' ', str(raw))
-    s = re.sub(r'(Player Note|DTDNew|New Player Note|IL\d+|NAPlayer Note|DTD)', '', s)
-    s = re.sub(r'\s+[A-Z]{2,3}\s*[-]\s*[A-Z,/]+.*', '', s)
+    s = re.sub(r'(Player Note|DTDNew|New Player Note|IL\d+|NAPlayer Note|DTD)\s*', '', s)
+    s = re.sub(r'[A-Z]{2,3}(?=\s*-\s*[A-Z,/0-9]).*', '', s)
+    s = re.sub(r'\s*\d+:\d+.*', '', s)
+    s = re.sub(r'\s+', ' ', s)
     return s.strip()
 
 def parse_hab(val):
@@ -630,7 +632,11 @@ def update_html(league, weekly, matchups, player_bat, player_pit, stats_tables):
     html = inject_js_var(html, 'const LD', league)
     html = inject_js_var(html, 'const WD', weekly)
     html = inject_js_var(html, 'const MT', matchups, is_array=True)
-    html = inject_js_var(html, 'var PLR', {"batters": player_bat, "pitchers": player_pit})
+    if player_bat is not None and player_pit is not None:
+        plr_data = {"batters": player_bat, "pitchers": player_pit}
+        html = inject_js_var(html, 'var PLR', plr_data)
+    else:
+        print("  Skipping PLR update (no player data fetched)")
     html = inject_js_var(html, 'const BF', stats_tables['BF'], is_array=True)
     html = inject_js_var(html, 'const BR', stats_tables['BR'], is_array=True)
     html = inject_js_var(html, 'const BK', stats_tables['BK'], is_array=True)
@@ -644,8 +650,8 @@ def update_html(league, weekly, matchups, player_bat, player_pit, stats_tables):
 
     # Update week badge and timestamp
     ts = datetime.now(timezone.utc).strftime('%b %d %Y %H:%M UTC')
-    html = re.sub(r'2026 &middot; Week \d+', f'2026 &middot; Week {CURRENT_WEEK}', html)
-    html = re.sub(r'Live from Yahoo Fantasy.*?(?=<)', f'Live from Yahoo Fantasy &middot; Updated {ts}', html)
+    html = re.sub(r'2026 [^W]*Week \d+', '2026 &middot; Week ' + str(CURRENT_WEEK), html)
+    html = re.sub(r'Live from Yahoo Fantasy[^<]*', 'Live from Yahoo Fantasy &middot; Updated ' + ts, html)
 
     with open(html_path, 'w', encoding='utf-8') as f:
         f.write(html)
