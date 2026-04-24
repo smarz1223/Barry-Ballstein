@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Barry Ballstein's Boys — Full Nightly Data Fetcher
+Barry Ballstein's Boys -- Full Nightly Data Fetcher
 Fetches all data from Yahoo Fantasy and regenerates the dashboard.
 """
 
@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime, timezone
 
 # ----------------------------------------------------------------
-# CONFIG — update CURRENT_WEEK each week
+# CONFIG -- update CURRENT_WEEK each week
 # ----------------------------------------------------------------
 LEAGUE_ID    = "96087"
 CURRENT_WEEK = 4
@@ -41,7 +41,7 @@ OWNER_MAP = {
     "YOU ALWAYS DO THIS!":  "Marz",
 }
 
-# W/L records — these must be updated manually each week
+# W/L records -- these must be updated manually each week
 # (Yahoo doesn't expose them cleanly without full OAuth)
 RECORDS = {
     "Pat":     {"w":2,"l":2},
@@ -115,14 +115,14 @@ def inject_js_var(html, var_name, value, is_array=False):
         elif c == close_ch:
             depth -= 1
             if depth == 0:
-                # pos is the closing brace — replace from val_start to pos+1
+                # pos is the closing brace -- replace from val_start to pos+1
                 new_val = json.dumps(value, ensure_ascii=False)
                 html = html[:val_start] + new_val + html[pos+1:]
                 print(f"  Updated {var_name}")
                 return html
         pos += 1
 
-    print(f"  WARNING: {var_name} — could not find closing brace")
+    print(f"  WARNING: {var_name} -- could not find closing brace")
     return html
 
 # ----------------------------------------------------------------
@@ -249,7 +249,7 @@ def clean_name(raw):
     return s.strip()
 
 def parse_hab(val):
-    """Parse H/AB field — handles Excel date corruption"""
+    """Parse H/AB field -- handles Excel date corruption"""
     from datetime import datetime, date as date_type
     if val is None: return 0, 0
     if isinstance(val, (datetime, date_type)):
@@ -664,7 +664,7 @@ def update_html(league, weekly, matchups, player_bat, player_pit, stats_tables):
 def main():
     ts = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
     print("=" * 60)
-    print(f"Barry Ballstein's Boys — Nightly Fetch  {ts}")
+    print(f"Barry Ballstein's Boys -- Nightly Fetch  {ts}")
     print("=" * 60)
 
     bat_raw  = fetch_bat_stats()
@@ -674,10 +674,10 @@ def main():
         print("\nERROR: No batter data. Cookie likely expired.")
         raise SystemExit(1)
 
-    # Try to fetch scoreboard for weekly/PA — fall back to snapshot if it fails
+    # Try to fetch scoreboard for weekly/PA -- fall back to snapshot if it fails
     try:
         weekly, matchups, pa_totals = fetch_scoreboard()
-        # Validate — if fewer than 2 weeks of data, use snapshot
+        # Validate -- if fewer than 2 weeks of data, use snapshot
         weeks_found = min(len(v) for v in weekly.values() if v)
         if weeks_found < 2:
             raise ValueError(f"Only {weeks_found} weeks found in scoreboard")
@@ -688,7 +688,7 @@ def main():
         matchups = [{"week":1,"home":"Pat","hpts":216,"away":"Jimmy","apts":132},{"week":1,"home":"Charlie","hpts":214,"away":"Oded","apts":177},{"week":1,"home":"Phil","hpts":208,"away":"Marz","apts":173},{"week":1,"home":"Sal","hpts":161,"away":"Fur","apts":140},{"week":2,"home":"Pat","hpts":383,"away":"Fur","apts":376},{"week":2,"home":"Jimmy","hpts":342,"away":"Marz","apts":308},{"week":2,"home":"Oded","hpts":284,"away":"Sal","apts":273},{"week":2,"home":"Charlie","hpts":290,"away":"Phil","apts":257},{"week":3,"home":"Jimmy","hpts":367,"away":"Oded","apts":336},{"week":3,"home":"Fur","hpts":374,"away":"Phil","apts":304},{"week":3,"home":"Sal","hpts":336,"away":"Pat","apts":309},{"week":3,"home":"Charlie","hpts":263,"away":"Marz","apts":255},{"week":4,"home":"Marz","hpts":369,"away":"Fur","apts":258},{"week":4,"home":"Sal","hpts":338,"away":"Jimmy","apts":333},{"week":4,"home":"Oded","hpts":369,"away":"Charlie","apts":375},{"week":4,"home":"Pat","hpts":323,"away":"Phil","apts":325}]
         pa_totals = {"Pat":1169,"Sal":1065,"Charlie":1058,"Fur":1217,"Oded":1229,"Jimmy":1197,"Phil":1159,"Marz":1071}
 
-    # Try to fetch individual player stats — fall back to existing PLR if it fails
+    # Try to fetch individual player stats -- fall back to existing PLR if it fails
     try:
         player_bat, player_pit = fetch_player_stats()
         if not player_bat:
