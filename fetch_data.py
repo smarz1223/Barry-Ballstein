@@ -310,26 +310,34 @@ def fetch_player_stats():
     team_bat_agg = {}
     team_pit_agg = {}
 
-    # Get team IDs from league home page
-    soup = fetch(
-        f"https://baseball.fantasysports.yahoo.com/b1/{LEAGUE_ID}",
-        "league home (team IDs)"
-    )
+    # Discover team IDs by trying 1-10 and matching page content to owner names
+    # (League home page is JS-rendered so we can't use it)
     team_links = {}
-    for a in soup.find_all("a", href=True):
-        m = re.match(rf"/b1/{LEAGUE_ID}/(\d+)$", a["href"])
-        if m:
-            num  = m.group(1)
-            name = a.get_text(strip=True)
-            if len(name) > 2:
-                for display, owner in OWNER_MAP.items():
-                    if fuzzy_match(name, display):
-                        team_links[owner] = num
-                        break
+    print("  Discovering team IDs (trying 1-10)...")
+    for num in range(1, 11):
+        if len(team_links) == len(OWNER_MAP): break
+        # Use batter teamstats - check the page title/header for team name
+        url = f"https://baseball.fantasysports.yahoo.com/b1/{LEAGUE_ID}/{num}/teamstats?pt=B&type=stats"
+        try:
+            r = requests.get(url, headers=HEADERS, timeout=20)
+        except Exception:
+            continue
+        if r.status_code != 200:
+            continue
+        page_text = r.text[:5000]  # team name is near top of page
+        for display, owner in OWNER_MAP.items():
+            if owner in team_links:
+                continue
+            if fuzzy_match(display, page_text[:2000]) or display[:8].lower() in page_text.lower():
+                team_links[owner] = str(num)
+                print(f"    Team {num} -> {owner}")
+                break
 
-    print(f"  Team IDs: {team_links}")
+    print(f"  Team IDs found: {team_links}")
     if not team_links:
-        raise SystemExit("FATAL: Could not find team IDs. League home page may be JS-rendered.")
+        raise SystemExit("FATAL: Could not discover any team IDs (1-10). Cookie may be expired.")
+    if len(team_links) < len(OWNER_MAP):
+        print(f"  WARNING: Only found {len(team_links)}/{len(OWNER_MAP)} teams.")
 
     for owner, team_num in team_links.items():
         bat_list = []
