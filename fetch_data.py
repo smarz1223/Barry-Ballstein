@@ -111,6 +111,7 @@ PIT_MULT = {
 OWNER_MAP = {
     "Chicks Dig The Holds": "Pat",
     "Deez Nuts":            "Sal",
+    "Deez 🥜":          "Sal",  # Yahoo uses emoji
     "Dirty Meat Swing":     "Charlie",
     "Frank Latera":         "Fur",
     "Santolos":             "Oded",
@@ -204,7 +205,8 @@ def parse_table(soup, idx=0):
 def fuzzy_match(a, b):
     a = a.lower()
     b = b.lower()
-    return a[:10] in b or b[:10] in a
+    # Use first 4 chars to handle "Deez Nuts" vs "Deez (emoji)" both matching "deez"
+    return a[:10] in b or b[:10] in a or a[:4] == b[:4]
 
 
 def norm_cdf(z):
