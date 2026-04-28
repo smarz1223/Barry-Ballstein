@@ -375,8 +375,17 @@ def compute_league(bat_raw, pit_raw):
         pf    = sum(WEEKLY_SCORES[owner])
         pa    = PA_TOTALS.get(owner, 0)
         weeks = w + l
-        pyth_p = (pf ** 2) / (pf ** 2 + pa ** 2) if pa > 0 and pf > 0 else 0
-        pyth   = round(pyth_p * weeks, 3)
+        # Pyth W: simulate H2H record vs all opponents each week (matches Excel method)
+        wins_h2h = total_h2h = 0
+        for wi, sc in enumerate(WEEKLY_SCORES[owner]):
+            if sc == 0: continue
+            for other in OWNERS:
+                if other == owner: continue
+                other_sc = WEEKLY_SCORES.get(other, [])
+                if wi < len(other_sc) and other_sc[wi] > 0:
+                    total_h2h += 1
+                    if sc > other_sc[wi]: wins_h2h += 1
+        pyth   = round((wins_h2h / total_h2h) * weeks, 3) if total_h2h > 0 else 0
         luck   = compute_luck(owner)
 
         perf_bat = zscore_pct(bat_vals, bat_pts[owner])
