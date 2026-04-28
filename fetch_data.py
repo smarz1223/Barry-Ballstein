@@ -466,7 +466,8 @@ def fetch_player_stats(bat_raw, pit_raw):
 
     print("  Found: " + str(sorted(batters.keys())))
     if not batters:
-        raise SystemExit("FATAL: No player stats fetched. teamstats returned no table data.")
+        print("  WARNING: teamstats returned no table data (JS-rendered). Keeping existing player data.")
+        return None, None, None, None
     if len(batters) < len(OWNER_MAP):
         print("  WARNING: Only got " + str(len(batters)) + "/" + str(len(OWNER_MAP)) + " teams.")
     return batters, pitchers, team_bat_agg, team_pit_agg
@@ -718,7 +719,10 @@ def update_html(league, player_bat, player_pit, stats_tables):
     html = inject_js_var(html, "const LD", league)
     html = inject_js_var(html, "const WD", WEEKLY_SCORES)
     html = inject_js_var(html, "const MT", MATCHUPS,                         is_array=True)
-    html = inject_js_var(html, "var PLR",  {"batters": player_bat, "pitchers": player_pit})
+    if player_bat is not None and player_pit is not None:
+        html = inject_js_var(html, "var PLR", {"batters": player_bat, "pitchers": player_pit})
+    else:
+        print("  Skipping PLR -- keeping existing player data in HTML")
     html = inject_js_var(html, "const BF", stats_tables["BF"],               is_array=True)
     html = inject_js_var(html, "const BR", stats_tables["BR"],               is_array=True)
     html = inject_js_var(html, "const BK", stats_tables["BK"],               is_array=True)
@@ -754,7 +758,10 @@ def main():
     pit_raw = fetch_pit_stats()
     player_bat, player_pit, team_bat_agg, team_pit_agg = fetch_player_stats(bat_raw, pit_raw)
     league       = compute_league(bat_raw, pit_raw)
-    stats_tables = compute_stats_tables(bat_raw, pit_raw, team_bat_agg, team_pit_agg)
+    # Use empty dicts for stats tables if player data unavailable
+    tba = team_bat_agg or {}
+    tpa = team_pit_agg or {}
+    stats_tables = compute_stats_tables(bat_raw, pit_raw, tba, tpa)
     update_html(league, player_bat, player_pit, stats_tables)
 
     print("\n" + "=" * 60)
