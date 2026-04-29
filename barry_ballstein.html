@@ -676,7 +676,6 @@ selTeam = function(btn) {
 // Override buildStats to apply adv heat after render
 buildCards();
 buildStandings();
-buildPfPaQuad();
 
 
 // ============================================================
@@ -947,12 +946,13 @@ function buildPfPaQuad(){
       }
     });
   }};
-  try{Chart.register(qbg2);Chart.register(olbl2);}catch(e){}
+  // plugins scoped inline to this chart only - do NOT register globally
   CH.pfpaq=new Chart(document.getElementById('pfpa-quad').getContext('2d'),{
+    plugins:[qbg2, olbl2],
     type:'scatter',
     data:{datasets:OWNERS.map(function(o,i){return{label:o,data:[{x:LD[o].pa,y:LD[o].pf}],backgroundColor:CLR[i]+'dd',borderColor:CLR[i],pointRadius:10,pointHoverRadius:13};})},
     options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},qbg2:{},olbl2:{},
+      plugins:{legend:{display:false},
         tooltip:{callbacks:{label:function(c){return c.dataset.label+' | PF: '+c.parsed.y+' | PA: '+c.parsed.x;}}}},
       scales:{
         x:{min:min_pa,max:max_pa,title:{display:true,text:'Points Against',color:'#6b7280'},grid:{color:'#e5e0d8'}},
