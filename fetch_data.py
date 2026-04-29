@@ -624,8 +624,11 @@ def update_html(league, stats_tables):
     # the Excel upload and are already in the HTML from the last upload
 
     ts   = datetime.now(timezone.utc).strftime("%b %d %Y %H:%M UTC")
-    html = re.sub(r"2026 [^W]*Week \d+",
-                  "2026 &middot; Week " + str(CURRENT_WEEK), html)
+    # Update LAST_UPDATED variable which populates the header timestamp
+    html = re.sub(r'var LAST_UPDATED="[^"]*";',
+                  'var LAST_UPDATED="' + ts + '";', html)
+    # Remove any leftover week badge references
+    html = re.sub(r"2026 [^W]*Week \d+", "2026", html)
     html = re.sub(r"Live from Yahoo Fantasy[^<]*",
                   "Live from Yahoo Fantasy &middot; Updated " + ts, html)
 
