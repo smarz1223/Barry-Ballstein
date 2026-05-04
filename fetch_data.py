@@ -16,7 +16,7 @@ Excel spreadsheet upload. Upload updated spreadsheet to GitHub weekly
 and the script reads it automatically.
 """
 
-import os, re, json, glob, math
+import os, re, json, glob, math, csv, io
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timezone
@@ -111,7 +111,7 @@ PIT_MULT = {
 OWNER_MAP = {
     "Chicks Dig The Holds": "Pat",
     "Deez Nuts":            "Sal",
-    "Deez 🥜":          "Sal",  # Yahoo uses emoji
+    "Deez \U0001f95c":          "Sal",  # Yahoo uses emoji
     "Dirty Meat Swing":     "Charlie",
     "Frank Latera":         "Fur",
     "Santolos":             "Oded",
@@ -596,10 +596,147 @@ def compute_stats_tables(bat_raw_by_owner, pit_raw_by_owner, bat_pts, pit_pts):
     }
 
 
+
+# ----------------------------------------------------------------
+# GOOGLE SHEETS PLAYER STATS
+# ----------------------------------------------------------------
+GSHEET_BAT_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQsb7MdNr-Ri6GDZ4HQ0pgpAypFhc6AxTygRRz6YotzO9dLVq4iTOqtxBSqgR2T_bmwR87Mf04Dy2G0/pub?gid=463514361&single=true&output=csv"
+GSHEET_PIT_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQsb7MdNr-Ri6GDZ4HQ0pgpAypFhc6AxTygRRz6YotzO9dLVq4iTOqtxBSqgR2T_bmwR87Mf04Dy2G0/pub?gid=1754975328&single=true&output=csv"
+
+
+def fetch_player_stats_from_gsheets():
+    print("\n[Player Stats -- Google Sheets]")
+    OWNER_CODES = {
+        "MARZ": "Marz", "PAT": "Pat", "SAL": "Sal", "CHARLIE": "Charlie",
+        "FUR": "Fur", "ODED": "Oded", "JIMMY": "Jimmy", "PHIL": "Phil"
+    }
+
+    def fetch_csv(url, label):
+        print("  GET " + label)
+        r = requests.get(url, timeout=20)
+        print("  " + str(r.status_code) + " (" + str(len(r.text)) + " bytes)")
+        if r.status_code in (401, 403):
+            raise SystemExit(
+                "FATAL: Google Sheets returned " + str(r.status_code) + ".\n"
+                "  Ensure the sheet is published: File -> Share -> Publish to web -> CSV"
+            )
+        if r.status_code != 200:
+            raise SystemExit("FATAL: HTTP " + str(r.status_code) + " from " + label)
+        return list(csv.reader(io.StringIO(r.text)))
+
+    def sfv(v):
+        try: return float(str(v).replace(",", "").strip() or 0)
+        except: return 0.0
+
+    def cpn(raw):
+        if not raw: return ""
+        s = str(raw).strip()
+        for noise in ["Player Note", "DTDNew", "New Player Note", "NAPlayer Note", "DTD"]:
+            s = s.replace(noise, "")
+        s = re.sub(r"IL\d+", "", s)
+        s = re.sub(r"\s*\d+:\d+.*", "", s)
+        return re.sub(r"\s+", " ", s).strip()
+
+    batters = {}
+    pitchers = {}
+
+    bat_rows = fetch_csv(GSHEET_BAT_URL, "Combined Batters")
+    for row in bat_rows[2:]:
+        if len(row) < 28: continue
+        owner = OWNER_CODES.get(str(row[0]).strip().upper())
+        if not owner: continue
+        name = cpn(row[2])
+        if not name or name.lower() in ("name", "totals", "player", ""): continue
+        gp = sfv(row[4])
+        if gp == 0: continue
+        hab = str(row[5]).strip()
+        hits = ab = 0
+        if "/" in hab:
+            try:
+                p = hab.split("/")
+                hits = int(float(p[0]))
+                ab = int(float(p[1]))
+            except Exception:
+                pass
+        r_  = int(sfv(row[6]))
+        b1  = int(sfv(row[7]))
+        b2  = int(sfv(row[8]))
+        b3  = int(sfv(row[9]))
+        hr  = int(sfv(row[10]))
+        rbi = int(sfv(row[11]))
+        sb  = int(sfv(row[12]))
+        bb  = int(sfv(row[13]))
+        ibb = int(sfv(row[14]))
+        hbp = int(sfv(row[15]))
+        fpts = round(sfv(row[26]), 1)
+        fppg = round(sfv(row[27]), 2)
+        pos  = str(row[33]).strip() if len(row) > 33 else ""
+        avg  = round(hits/ab, 3)                 if ab > 0 else 0.0
+        slug = round((hits+b2+b3*2+hr*3)/ab, 3) if ab > 0 else 0.0
+        if owner not in batters: batters[owner] = []
+        batters[owner].append({
+            "name": name, "pos": pos, "gp": int(gp),
+            "hits": hits, "ab": ab, "avg": avg, "slug": slug,
+            "r": r_, "b1": b1, "b2": b2, "b3": b3, "hr": hr,
+            "rbi": rbi, "sb": sb, "bb": bb, "ibb": ibb, "hbp": hbp,
+            "fpts": fpts, "fppg": fppg
+        })
+
+    pit_rows = fetch_csv(GSHEET_PIT_URL, "Combined Pitchers")
+    for row in pit_rows[2:]:
+        if len(row) < 27: continue
+        owner = OWNER_CODES.get(str(row[0]).strip().upper())
+        if not owner: continue
+        name = cpn(row[2])
+        if not name or name.lower() in ("name", "totals", "player", ""): continue
+        gp  = sfv(row[4])
+        ip  = round(sfv(row[5]), 1)
+        if gp == 0 and ip == 0: continue
+        w   = int(sfv(row[6]))
+        l   = int(sfv(row[7]))
+        sv  = int(sfv(row[8]))
+        er  = sfv(row[9])
+        k   = sfv(row[10])
+        hld = int(sfv(row[11]))
+        nh  = int(sfv(row[12]))
+        pg  = int(sfv(row[13]))
+        bsv = int(sfv(row[14]))
+        fpts = round(sfv(row[25]), 1)
+        fppg = round(sfv(row[26]), 2)
+        role = str(row[29]).strip() if len(row) > 29 else "SP"
+        pos  = str(row[33]).strip() if len(row) > 33 else role
+        era    = round(er*9/ip, 2) if ip > 0 else 0.0
+        k9     = round(k *9/ip,  2) if ip > 0 else 0.0
+        wl_pct = round(w/(w+l),  3) if (w+l) > 0 else 0.0
+        if owner not in pitchers: pitchers[owner] = []
+        pitchers[owner].append({
+            "name": name, "pos": pos, "gp": int(gp), "ip": ip,
+            "w": w, "l": l, "sv": sv, "er": int(er), "k": int(k),
+            "hld": hld, "nh": nh, "pg": pg, "bsv": bsv,
+            "era": era, "k9": k9, "wl_pct": wl_pct,
+            "fpts": fpts, "fppg": fppg
+        })
+
+    for owner in batters:
+        batters[owner]  = sorted(batters[owner],  key=lambda x: -x["fpts"])
+    for owner in pitchers:
+        pitchers[owner] = sorted(pitchers[owner], key=lambda x: -x["fpts"])
+
+    print("  Batters:  " + str({o: len(v) for o, v in batters.items()}))
+    print("  Pitchers: " + str({o: len(v) for o, v in pitchers.items()}))
+
+    if not batters:
+        raise SystemExit(
+            "FATAL: No batter data parsed from Google Sheets.\n"
+            "  Check: File -> Share -> Publish to web -> Combined Batters -> CSV"
+        )
+    return batters, pitchers
+
+
 # ----------------------------------------------------------------
 # UPDATE HTML
 # ----------------------------------------------------------------
-def update_html(league, stats_tables):
+def update_html(league, stats_tables, player_bat=None, player_pit=None):
     print("\n[Updating HTML]")
     candidates = ["barry_ballstein.html"] + glob.glob("barry_ballstein*.html")
     html_path  = next((f for f in candidates if os.path.exists(f)), None)
@@ -609,6 +746,11 @@ def update_html(league, stats_tables):
     with open(html_path, "r", encoding="utf-8") as f:
         html = f.read()
 
+    if player_bat is not None and player_pit is not None:
+        html = inject_js_var(html, "var PLR",
+                             {"batters": player_bat, "pitchers": player_pit})
+    else:
+        print("  Skipping PLR -- keeping existing player data")
     html = inject_js_var(html, "const LD", league)
     html = inject_js_var(html, "const WD", WEEKLY_SCORES)
     html = inject_js_var(html, "const MT", MATCHUPS,             is_array=True)
@@ -659,7 +801,8 @@ def main():
     stats_tables = compute_stats_tables(bat_raw_by_owner, pit_raw_by_owner,
                                         bat_pts, pit_pts)
 
-    update_html(league, stats_tables)
+    player_bat, player_pit = fetch_player_stats_from_gsheets()
+    update_html(league, stats_tables, player_bat, player_pit)
 
     print("\n" + "=" * 60)
     print("Done! Week " + str(CURRENT_WEEK) + " | " + ts)
