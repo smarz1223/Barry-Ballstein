@@ -658,8 +658,14 @@ def fetch_weekly_from_gsheets():
 
     def get_owner(name):
         name = str(name).strip()
+        # Direct and substring match
         for k, v in TEAM_TO_OWNER.items():
             if k.lower() in name.lower() or name.lower() in k.lower():
+                return v
+        # Fuzzy: first 4 chars (catches "Deez Nuts" vs "Deez 🥜" vs any Deez variant)
+        name_prefix = name.lower()[:4]
+        for k, v in TEAM_TO_OWNER.items():
+            if k.lower()[:4] == name_prefix:
                 return v
         return None
 
