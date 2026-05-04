@@ -131,7 +131,7 @@ DISPLAYS = {
     "Marz":    "YOU ALWAYS DO THIS!",
 }
 
-OWNERS = list(OWNER_MAP.values())
+OWNERS = list(dict.fromkeys(OWNER_MAP.values()))  # unique, preserves order
 
 # Google Sheets CSV URLs (published tabs)
 GSHEET_WEEKLY_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQsb7MdNr-Ri6GDZ4HQ0pgpAypFhc6AxTygRRz6YotzO9dLVq4iTOqtxBSqgR2T_bmwR87Mf04Dy2G0/pub?gid=1444854659&single=true&output=csv"
@@ -423,6 +423,17 @@ def compute_league(bat_raw, pit_raw):
               " PF=" + str(pf) + " PA=" + str(pa) +
               " bat=" + str(round(bat_pts[owner])) +
               " pit=" + str(round(pit_pts[owner])))
+
+    # Normalize luck to 0-100 scale (luckiest=100, unluckiest=0)
+    luck_vals = [league[o]["luck"] for o in OWNERS]
+    luck_min  = min(luck_vals)
+    luck_max  = max(luck_vals)
+    luck_rng  = luck_max - luck_min if luck_max != luck_min else 1.0
+    for o in OWNERS:
+        raw = league[o]["luck"]
+        league[o]["luck"] = round((raw - luck_min) / luck_rng * 100, 1)
+    print("  Luck (normalized 0-100): " +
+          str({o: league[o]["luck"] for o in OWNERS}))
 
     return league, bat_raw_by_owner, pit_raw_by_owner
 
