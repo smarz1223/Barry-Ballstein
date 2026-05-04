@@ -789,11 +789,49 @@ def update_html(league, stats_tables, player_bat=None, player_pit=None):
 # ----------------------------------------------------------------
 # MAIN
 # ----------------------------------------------------------------
+def diagnose_yahoo_urls():
+    """
+    Temporary diagnostic - runs once to understand Yahoo page structure.
+    Remove after we confirm which URLs work for weekly scores.
+    """
+    print("\n[DIAGNOSTIC] Testing Yahoo URLs for weekly score data...")
+    import re as re2
+
+    test_urls = [
+        f"https://baseball.fantasysports.yahoo.com/b1/{LEAGUE_ID}/headtoheadstats?pt=B&type=weekly",
+        f"https://baseball.fantasysports.yahoo.com/b1/{LEAGUE_ID}/headtoheadstats?pt=B&type=weekly&week=5",
+        f"https://baseball.fantasysports.yahoo.com/b1/{LEAGUE_ID}/scoreboard?week=5",
+        f"https://baseball.fantasysports.yahoo.com/b1/{LEAGUE_ID}/matchups",
+    ]
+
+    for url in test_urls:
+        try:
+            r = requests.get(url, headers=HEADERS, timeout=20)
+            soup = BeautifulSoup(r.text, "lxml")
+            tables = soup.find_all("table")
+            print(f"  {url.split('/')[-1][:50]}: {r.status_code} {len(r.text):,}b {len(tables)} tables")
+            if tables:
+                for t in tables[:2]:
+                    hdrs = [c.get_text(strip=True) for c in t.find_all(["th","td"])[:8]]
+                    print(f"    Table headers: {hdrs}")
+            # Check for embedded JSON scores
+            score_matches = re2.findall(r'"(?:totalPts|teamScore|fanPts|score)"\s*:\s*"?([\d.]+)"?', r.text[:20000])
+            if score_matches:
+                print(f"    Score values in JSON: {score_matches[:6]}")
+            matchup_json = re2.findall(r'"(?:matchup|scoreboard)"\s*:\s*\{', r.text[:20000])
+            if matchup_json:
+                print(f"    Matchup JSON keys found: {matchup_json[:3]}")
+        except Exception as e:
+            print(f"  ERROR on {url}: {e}")
+
+
 def main():
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     print("=" * 60)
     print("Barry Ballstein's Boys -- Nightly Fetch  " + ts)
     print("=" * 60)
+
+    diagnose_yahoo_urls()
 
     print("\n[Validating config]")
     validate_config()
