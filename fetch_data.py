@@ -133,6 +133,11 @@ DISPLAYS = {
 
 OWNERS = list(OWNER_MAP.values())
 
+# Google Sheets CSV URLs (published tabs)
+GSHEET_WEEKLY_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQsb7MdNr-Ri6GDZ4HQ0pgpAypFhc6AxTygRRz6YotzO9dLVq4iTOqtxBSqgR2T_bmwR87Mf04Dy2G0/pub?gid=1444854659&single=true&output=csv"
+GSHEET_BAT_URL    = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQsb7MdNr-Ri6GDZ4HQ0pgpAypFhc6AxTygRRz6YotzO9dLVq4iTOqtxBSqgR2T_bmwR87Mf04Dy2G0/pub?gid=463514361&single=true&output=csv"
+GSHEET_PIT_URL    = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQsb7MdNr-Ri6GDZ4HQ0pgpAypFhc6AxTygRRz6YotzO9dLVq4iTOqtxBSqgR2T_bmwR87Mf04Dy2G0/pub?gid=1754975328&single=true&output=csv"
+
 
 def validate_config():
     errors = []
@@ -604,11 +609,132 @@ def compute_stats_tables(bat_raw_by_owner, pit_raw_by_owner, bat_pts, pit_pts):
 
 
 
-# ----------------------------------------------------------------
-# GOOGLE SHEETS PLAYER STATS
-# ----------------------------------------------------------------
-GSHEET_BAT_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQsb7MdNr-Ri6GDZ4HQ0pgpAypFhc6AxTygRRz6YotzO9dLVq4iTOqtxBSqgR2T_bmwR87Mf04Dy2G0/pub?gid=463514361&single=true&output=csv"
-GSHEET_PIT_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQsb7MdNr-Ri6GDZ4HQ0pgpAypFhc6AxTygRRz6YotzO9dLVq4iTOqtxBSqgR2T_bmwR87Mf04Dy2G0/pub?gid=1754975328&single=true&output=csv"
+
+def fetch_weekly_from_gsheets():
+    """
+    Fetch weekly scores from the published Google Sheets CSV.
+    Tab: Weekly Results Table -- you update this manually each week.
+    Automatically derives: WEEKLY_SCORES, MATCHUPS, PA_TOTALS, RECORDS, CURRENT_WEEK.
+    Fails loudly if the sheet can't be fetched.
+    """
+    print("\n[Weekly Scores -- Google Sheets]")
+    r = requests.get(GSHEET_WEEKLY_URL, timeout=20)
+    print("  " + str(r.status_code) + " (" + str(len(r.text)) + " bytes)")
+
+    if r.status_code != 200:
+        raise SystemExit(
+            "FATAL: Could not fetch Weekly Results Table from Google Sheets.\n"
+            "  Status: " + str(r.status_code) + "\n"
+            "  URL: " + GSHEET_WEEKLY_URL
+        )
+
+    rows = list(csv.reader(io.StringIO(r.text)))
+    if len(rows) < 2:
+        raise SystemExit("FATAL: Weekly Results Table CSV is empty.")
+
+    # Build owner lookup
+    TEAM_TO_OWNER = {
+        "Chicks Dig The Holds": "Pat",
+        "Deez Nuts":            "Sal",
+        "Deez \U0001f95c":     "Sal",
+        "Dirty Meat Swing":     "Charlie",
+        "Frank Latera":         "Fur",
+        "Santolos":             "Oded",
+        "Team Mush":            "Jimmy",
+        "Tony's Calling":       "Phil",
+        "YOU ALWAYS DO THIS!":  "Marz",
+    }
+
+    def get_owner(name):
+        name = str(name).strip()
+        for k, v in TEAM_TO_OWNER.items():
+            if k.lower() in name.lower() or name.lower() in k.lower():
+                return v
+        return None
+
+    weekly_scores = {o: {} for o in OWNERS}  # owner -> {week: score}
+    pa_by_week    = {o: {} for o in OWNERS}  # owner -> {week: pa}
+    records       = {o: {"w": 0, "l": 0} for o in OWNERS}
+    matchup_raw   = []  # list of (week, owner, pf, pa)
+
+    # Skip header row (row 0)
+    for row in rows[1:]:
+        if len(row) < 8: continue
+        team_name = str(row[0]).strip()
+        week_raw  = str(row[1]).strip()
+        pf_raw    = str(row[2]).strip()
+        pa_raw    = str(row[3]).strip()
+        wl_raw    = str(row[5]).strip().upper()
+        status    = str(row[7]).strip().upper()
+
+        if status != "PAST": continue
+        owner = get_owner(team_name)
+        if not owner: continue
+
+        try:
+            week = int(float(week_raw))
+            pf   = round(float(pf_raw))
+            pa   = round(float(pa_raw))
+        except (ValueError, TypeError):
+            continue
+
+        weekly_scores[owner][week] = pf
+        pa_by_week[owner][week]    = pa
+        matchup_raw.append((week, owner, pf, pa))
+
+        if wl_raw == "W":
+            records[owner]["w"] += 1
+        elif wl_raw == "L":
+            records[owner]["l"] += 1
+
+    if not matchup_raw:
+        raise SystemExit(
+            "FATAL: No PAST weeks found in Weekly Results Table.\n"
+            "  Make sure at least one week has been filled in and marked PAST."
+        )
+
+    # Determine current week
+    all_past_weeks = set(w for w, o, pf, pa in matchup_raw)
+    current_week   = max(all_past_weeks)
+    print("  Weeks found: " + str(sorted(all_past_weeks)))
+    print("  Current week: " + str(current_week))
+
+    # Build ordered weekly scores list (index 0 = week 1)
+    weekly_scores_list = {}
+    for owner in OWNERS:
+        weekly_scores_list[owner] = [
+            weekly_scores[owner].get(w, 0) for w in range(1, current_week + 1)
+        ]
+
+    # Build PA totals
+    pa_totals = {}
+    for owner in OWNERS:
+        pa_totals[owner] = sum(pa_by_week[owner].values())
+
+    # Build matchups list -- pair teams by matching PF=PA relationship
+    matchups = []
+    by_week  = {}
+    for week, owner, pf, pa in matchup_raw:
+        if week not in by_week: by_week[week] = []
+        by_week[week].append((owner, pf, pa))
+
+    for week in sorted(by_week.keys()):
+        entries = by_week[week]
+        paired  = set()
+        for i, (o1, pf1, pa1) in enumerate(entries):
+            if o1 in paired: continue
+            for j, (o2, pf2, pa2) in enumerate(entries):
+                if o2 == o1 or o2 in paired: continue
+                # Match: o1's PA should equal o2's PF (and vice versa)
+                if abs(pa1 - pf2) <= 1:
+                    matchups.append({"week": week, "home": o1, "hpts": pf1,
+                                     "away": o2, "apts": pf2})
+                    paired.add(o1); paired.add(o2)
+                    break
+
+    print("  Records: " + str({o: str(v["w"])+"-"+str(v["l"]) for o,v in records.items()}))
+    print("  Matchups built: " + str(len(matchups)))
+    return weekly_scores_list, matchups, pa_totals, records, current_week
 
 
 def fetch_player_stats_from_gsheets():
@@ -789,49 +915,28 @@ def update_html(league, stats_tables, player_bat=None, player_pit=None):
 # ----------------------------------------------------------------
 # MAIN
 # ----------------------------------------------------------------
-def diagnose_yahoo_urls():
-    """
-    Temporary diagnostic - runs once to understand Yahoo page structure.
-    Remove after we confirm which URLs work for weekly scores.
-    """
-    print("\n[DIAGNOSTIC] Testing Yahoo URLs for weekly score data...")
-    import re as re2
-
-    test_urls = [
-        f"https://baseball.fantasysports.yahoo.com/b1/{LEAGUE_ID}/headtoheadstats?pt=B&type=weekly",
-        f"https://baseball.fantasysports.yahoo.com/b1/{LEAGUE_ID}/headtoheadstats?pt=B&type=weekly&week=5",
-        f"https://baseball.fantasysports.yahoo.com/b1/{LEAGUE_ID}/scoreboard?week=5",
-        f"https://baseball.fantasysports.yahoo.com/b1/{LEAGUE_ID}/matchups",
-    ]
-
-    for url in test_urls:
-        try:
-            r = requests.get(url, headers=HEADERS, timeout=20)
-            soup = BeautifulSoup(r.text, "lxml")
-            tables = soup.find_all("table")
-            print(f"  {url.split('/')[-1][:50]}: {r.status_code} {len(r.text):,}b {len(tables)} tables")
-            if tables:
-                for t in tables[:2]:
-                    hdrs = [c.get_text(strip=True) for c in t.find_all(["th","td"])[:8]]
-                    print(f"    Table headers: {hdrs}")
-            # Check for embedded JSON scores
-            score_matches = re2.findall(r'"(?:totalPts|teamScore|fanPts|score)"\s*:\s*"?([\d.]+)"?', r.text[:20000])
-            if score_matches:
-                print(f"    Score values in JSON: {score_matches[:6]}")
-            matchup_json = re2.findall(r'"(?:matchup|scoreboard)"\s*:\s*\{', r.text[:20000])
-            if matchup_json:
-                print(f"    Matchup JSON keys found: {matchup_json[:3]}")
-        except Exception as e:
-            print(f"  ERROR on {url}: {e}")
-
-
 def main():
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     print("=" * 60)
     print("Barry Ballstein's Boys -- Nightly Fetch  " + ts)
     print("=" * 60)
 
-    diagnose_yahoo_urls()
+
+    # Attempt to load weekly scores from Google Sheets (auto-updated by Apps Script)
+    gsheets_weekly = fetch_weekly_from_gsheets()
+    if gsheets_weekly:  # always true -- raises SystemExit on failure
+        weekly_scores_live, matchups_live, pa_totals_live, records_live, current_week_live = gsheets_weekly
+        # Override the manual config with live data from Google Sheets
+        import builtins
+        # Monkey-patch the module-level constants used by compute_league and update_html
+        globals()["WEEKLY_SCORES"] = weekly_scores_live
+        globals()["MATCHUPS"]      = matchups_live
+        globals()["PA_TOTALS"]     = pa_totals_live
+        globals()["RECORDS"]       = records_live
+        globals()["CURRENT_WEEK"]  = current_week_live
+        print("  Using live data from Google Sheets (overrides manual config)")
+    else:
+        print("  Using manual config for weekly scores")
 
     print("\n[Validating config]")
     validate_config()
