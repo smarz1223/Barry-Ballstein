@@ -349,8 +349,11 @@ def compute_league(bat_raw, pit_raw):
                 break
 
     def compute_luck(owner):
+        # Luck = actual win% minus expected win% from H2H simulation
+        # Positive = lucky (won more than schedule-adjusted expectation)
+        # Negative = unlucky (won less than deserved)
         scores = WEEKLY_SCORES.get(owner, [])
-        wins = total = 0
+        h2h_wins = h2h_total = 0
         for wi, score in enumerate(scores):
             if score == 0:
                 continue
@@ -359,10 +362,14 @@ def compute_league(bat_raw, pit_raw):
                     continue
                 other_s = WEEKLY_SCORES.get(other, [])
                 if wi < len(other_s) and other_s[wi] > 0:
-                    total += 1
+                    h2h_total += 1
                     if score > other_s[wi]:
-                        wins += 1
-        return round(wins / total, 4) if total > 0 else 0.0
+                        h2h_wins += 1
+        expected_win_pct = h2h_wins / h2h_total if h2h_total > 0 else 0.0
+        rec = RECORDS[owner]
+        actual_weeks = rec["w"] + rec["l"]
+        actual_win_pct = rec["w"] / actual_weeks if actual_weeks > 0 else 0.0
+        return round(actual_win_pct - expected_win_pct, 4)
 
     # Performance ratings using normal-distribution z-scores (matches Excel)
     bat_vals = [bat_pts[o] for o in OWNERS]
