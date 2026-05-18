@@ -54,7 +54,7 @@
 @media (max-width: 600px) {
   .hm { display: none !important; }
 }
-</style></head><body><header class="header" style="flex-wrap:wrap;height:auto;"><div class="logo-text">Barry Ballstein's <span>Boys</span></div><nav><a href="#" class="active" onclick="showPage('standings',this);return false">Standings</a><a href="#" onclick="showPage('weekly',this);return false">Weekly</a><a href="#" onclick="showPage('analytics',this);return false">Analytics</a><a href="#" onclick="showPage('teams',this);return false">Teams</a><a href="#" onclick="showPage('stats',this);return false">Stats</a><a href="#" onclick="showPage('players',this);return false">Players</a></nav><div class="hright"><div class="badge" id="last-updated">Last updated: --</div></div></header><div class="stripe"></div><main class="main"><div id="pg-standings" class="page active"><div class="eyebrow">League Overview</div><div class="ptitle">Standings</div><div class="psub">Head-to-head points &middot; <span id="sub-timestamp"></span></div><div class="g5 mb2" id="sc"></div><div class="card mb2"><div class="ctitle">League Standings &mdash; click any column to sort</div><table class="dt" id="st"><thead><tr><th data-t="st" data-c="0" data-x="0" onclick="hs(this)">Owner / Team</th><th data-t="st" data-c="1" data-x="0" onclick="hs(this)">W</th><th data-t="st" data-c="2" data-x="0" onclick="hs(this)">L</th><th data-t="st" data-c="3" data-x="0" onclick="hs(this)" class="hm">W%</th><th data-t="st" data-c="4" data-x="0" onclick="hs(this)">PF</th><th data-t="st" data-c="5" data-x="0" onclick="hs(this)">PA</th><th data-t="st" data-c="6" data-x="0" onclick="hs(this)" class="hm">Batters</th><th data-t="st" data-c="7" data-x="0" onclick="hs(this)" class="hm">Pitchers</th><th data-t="st" data-c="8" data-x="0" onclick="hs(this)">Luck</th><th data-t="st" data-c="9" data-x="0" onclick="hs(this)" class="hm">Pyth W</th></tr></thead><tbody id="sb"></tbody></table></div><div class="card mt2"><div class="ctitle">Points For vs Points Against -- Quadrant View</div><div style="position:relative;height:320px" class="ch-wrap" data-desktop-h="320" data-mobile-h="220"><canvas id="pfpa-quad" role="img" aria-label="PF PA Quadrant"></canvas></div><div class="ql" style="margin-top:10px"><div style="background:#f0fdf4;color:#15803d">High PF / Low PA</div><div style="background:#eff6ff;color:#1d4ed8;text-align:right">High PF / High PA</div><div style="background:#fffbeb;color:#92400e">Low PF / Low PA</div><div style="background:#fff1f2;color:#9f1239;text-align:right">Low PF / High PA</div></div></div></div></div><div id="pg-weekly" class="page"><div class="eyebrow">Week by Week</div><div class="ptitle">Weekly Results</div><div class="psub">Scores, matchups, rankings, and consistency</div><div class="tabs"><button class="tb ta" onclick="showTab('scores',this)">Scores</button><button class="tb" onclick="showTab('matchups',this)">Matchups</button><button class="tb" onclick="showTab('consistency',this)">Consistency</button></div><div id="tp-scores" class="tp active"><div class="card mb2"><div class="ctitle">Weekly Scoring &mdash; click a name to highlight</div><div class="leg" id="wleg"></div><div style="position:relative;height:300px" class="ch-wrap" data-desktop-h="300" data-mobile-h="200"><canvas id="wkly" role="img" aria-label="Weekly scores"></canvas></div></div><div class="card"><div class="ctitle">Weekly Rankings</div><div class="wkg" id="wkr"></div></div></div><div id="tp-matchups" class="tp"><div class="ofilt" id="mfilt"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem" id="mg"></div></div><div id="tp-consistency" class="tp"><div class="card mb2"><div class="ctitle">Scoring Range &mdash; Floor to Ceiling</div><div id="cbar" style="margin-top:8px"></div></div><div class="card"><div class="ctitle">Standard Deviation &mdash; Lower = More Consistent</div><div style="position:relative;height:260px" class="ch-wrap" data-desktop-h="260" data-mobile-h="200"><canvas id="sdch" role="img" aria-label="Std dev"></canvas></div></div></div></div><div id="pg-analytics" class="page"><div class="eyebrow">Advanced Metrics</div><div class="ptitle">Analytics</div><div class="psub">Luck, performance ratings, and quadrant analysis</div><div class="g2 mb2"><div class="card"><div class="ctitle">Luck Meter &mdash; 0% Unlucky / 100% Lucky</div><div id="lbar" style="margin-top:4px"></div></div><div class="card"><div class="ctitle">Actual vs Expected Wins</div><div style="position:relative;height:280px" class="ch-wrap" data-desktop-h="280" data-mobile-h="200"><canvas id="pyth" role="img" aria-label="Pyth wins"></canvas></div></div></div><div class="g2"><div class="card"><div class="ctitle">Performance Quadrant &mdash; Batters vs Pitchers</div><div style="position:relative;height:320px" class="ch-wrap" data-desktop-h="320" data-mobile-h="240"><canvas id="quad" role="img" aria-label="Quadrant"></canvas></div><div class="ql"><div style="background:#f0fdf4;color:#15803d">Good Batters / Good Pitchers</div><div style="background:#fffbeb;color:#92400e;text-align:right">Bad Batters / Good Pitchers</div><div style="background:#eff6ff;color:#1d4ed8">Good Batters / Bad Pitchers</div><div style="background:#fff1f2;color:#9f1239;text-align:right">Bad Batters / Bad Pitchers</div></div></div><div class="card"><div class="ctitle">Total Performance Rating</div><div id="pbar" style="margin-top:8px"></div><div class="div"></div><div class="ctitle">Performance Detail &mdash; click to sort</div><table class="dt" id="pt"><thead><tr><th data-t="pt" data-c="0" data-x="1" onclick="hs(this)">Owner</th><th data-t="pt" data-c="1" data-x="0" onclick="hs(this)">Bat Rating</th><th data-t="pt" data-c="2" data-x="0" onclick="hs(this)">Pit Rating</th><th data-t="pt" data-c="3" data-x="0" onclick="hs(this)">Total</th></tr></thead><tbody id="pb"></tbody></table></div></div></div><div id="pg-teams" class="page"><div class="eyebrow">Roster Deep Dive</div><div class="ptitle">Teams</div><div class="psub">Season totals and metrics by owner</div><div class="tsel" id="tsel"></div><div id="tdsp"></div><div id="player-tables"></div></div><div id="pg-stats" class="page"><div class="eyebrow">Detailed Statistics</div><div class="ptitle">Stats</div><div class="psub">Fantasy points, raw stats, rankings, z-scores, and advanced metrics &mdash; click any column to sort</div><div class="tabs"><button class="tb ta" onclick="showTab('pit',this)">Pitcher Stats</button><button class="tb" onclick="showTab('bat',this)">Batter Stats</button></div><div id="tp-pit" class="tp active"><div id="pit-c"></div></div><div id="tp-bat" class="tp"><div id="bat-c"></div></div></div><div id="pg-players" class="page"><div class="eyebrow">League-Wide Roster</div><div class="ptitle">Players</div><div class="psub">All players across every team &mdash; click a column to sort, click an owner to highlight</div><div class="tabs"><button class="tb ta" onclick="showTab('pl-bat',this)">Hitters</button><button class="tb" onclick="showTab('pl-pit',this)">Pitchers</button></div><div id="tp-pl-bat" class="tp active"><div class="ofilt" id="pl-bat-filt"></div><div class="card" style="padding:0;overflow:hidden"><div style="overflow-x:auto"><table class="dt" id="pl-bat-tbl" style="font-size:12px"><thead></thead><tbody></tbody></table></div></div></div><div id="tp-pl-pit" class="tp"><div class="ofilt" id="pl-pit-filt"></div><div class="ctitle" style="margin-bottom:0.5rem;margin-top:0">Starters</div><div class="card mb2" style="padding:0;overflow:hidden"><div style="overflow-x:auto"><table class="dt" id="pl-sp-tbl" style="font-size:12px"><thead></thead><tbody></tbody></table></div></div><div class="ctitle" style="margin-bottom:0.5rem">Relievers</div><div class="card" style="padding:0;overflow:hidden"><div style="overflow-x:auto"><table class="dt" id="pl-rp-tbl" style="font-size:12px"><thead></thead><tbody></tbody></table></div></div></div></main><script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+</style></head><body><header class="header" style="flex-wrap:wrap;height:auto;"><div class="logo-text">Barry Ballstein's <span>Boys</span></div><nav><a href="#" class="active" onclick="showPage('standings',this);return false">Standings</a><a href="#" onclick="showPage('weekly',this);return false">Weekly</a><a href="#" onclick="showPage('analytics',this);return false">Analytics</a><a href="#" onclick="showPage('teams',this);return false">Teams</a><a href="#" onclick="showPage('stats',this);return false">Stats</a><a href="#" onclick="showPage('players',this);return false">Players</a></nav><div class="hright"><div class="badge" id="last-updated">Last updated: --</div></div></header><div class="stripe"></div><main class="main"><div id="pg-standings" class="page active"><div class="eyebrow">League Overview</div><div class="ptitle">Standings</div><div class="psub">Head-to-head points &middot; <span id="sub-timestamp"></span></div><div class="g5 mb2" id="sc"></div><div class="card mb2"><div class="ctitle">League Standings &mdash; click any column to sort</div><table class="dt" id="st"><thead><tr><th data-t="st" data-c="0" data-x="0" onclick="hs(this)">Owner / Team</th><th data-t="st" data-c="1" data-x="0" onclick="hs(this)">W</th><th data-t="st" data-c="2" data-x="0" onclick="hs(this)">L</th><th data-t="st" data-c="3" data-x="0" onclick="hs(this)" class="hm">W%</th><th data-t="st" data-c="4" data-x="0" onclick="hs(this)">PF</th><th data-t="st" data-c="5" data-x="0" onclick="hs(this)">PA</th><th data-t="st" data-c="6" data-x="0" onclick="hs(this)" class="hm">Batters</th><th data-t="st" data-c="7" data-x="0" onclick="hs(this)" class="hm">Pitchers</th><th data-t="st" data-c="8" data-x="0" onclick="hs(this)">Luck</th><th data-t="st" data-c="9" data-x="0" onclick="hs(this)" class="hm">Pyth W</th></tr></thead><tbody id="sb"></tbody></table></div></div></div><div id="pg-weekly" class="page"><div class="eyebrow">Week by Week</div><div class="ptitle">Weekly Results</div><div class="psub">Scores, matchups, rankings, and consistency</div><div class="tabs"><button class="tb ta" onclick="showTab('scores',this)">Scores</button><button class="tb" onclick="showTab('matchups',this)">Matchups</button><button class="tb" onclick="showTab('consistency',this)">Consistency</button></div><div id="tp-scores" class="tp active"><div class="card mb2"><div class="ctitle">Weekly Scoring &mdash; click a name to highlight</div><div class="leg" id="wleg"></div><div style="position:relative;height:300px" class="ch-wrap" data-desktop-h="300" data-mobile-h="200"><canvas id="wkly" role="img" aria-label="Weekly scores"></canvas></div></div><div class="card"><div class="ctitle">Weekly Rankings</div><div class="wkg" id="wkr"></div></div></div><div id="tp-matchups" class="tp"><div class="ofilt" id="mfilt"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem" id="mg"></div></div><div id="tp-consistency" class="tp"><div class="card mb2"><div class="ctitle">Scoring Range &mdash; Floor to Ceiling</div><div id="cbar" style="margin-top:8px"></div></div><div class="card"><div class="ctitle">Standard Deviation &mdash; Lower = More Consistent</div><div style="position:relative;height:260px" class="ch-wrap" data-desktop-h="260" data-mobile-h="200"><canvas id="sdch" role="img" aria-label="Std dev"></canvas></div></div></div></div><div id="pg-analytics" class="page"><div class="eyebrow">Advanced Metrics</div><div class="ptitle">Analytics</div><div class="psub">Luck, performance ratings, and quadrant analysis</div><div class="g2 mb2"><div class="card"><div class="ctitle">Luck Meter &mdash; 0% Unlucky / 100% Lucky</div><div id="lbar" style="margin-top:4px"></div></div><div class="card"><div class="ctitle">Actual vs Expected Wins</div><div style="position:relative;height:280px" class="ch-wrap" data-desktop-h="280" data-mobile-h="200"><canvas id="pyth" role="img" aria-label="Pyth wins"></canvas></div></div></div><div class="g2"><div class="card"><div class="ctitle">Performance Quadrant &mdash; Batters vs Pitchers</div><div style="position:relative;height:320px" class="ch-wrap" data-desktop-h="320" data-mobile-h="240"><canvas id="quad" role="img" aria-label="Quadrant"></canvas></div><div class="ql"><div style="background:#f0fdf4;color:#15803d">Good Batters / Good Pitchers</div><div style="background:#fffbeb;color:#92400e;text-align:right">Bad Batters / Good Pitchers</div><div style="background:#eff6ff;color:#1d4ed8">Good Batters / Bad Pitchers</div><div style="background:#fff1f2;color:#9f1239;text-align:right">Bad Batters / Bad Pitchers</div></div></div><div class="card"><div class="ctitle">Total Performance Rating</div><div id="pbar" style="margin-top:8px"></div><div class="div"></div><div class="ctitle">Performance Detail &mdash; click to sort</div><table class="dt" id="pt"><thead><tr><th data-t="pt" data-c="0" data-x="1" onclick="hs(this)">Owner</th><th data-t="pt" data-c="1" data-x="0" onclick="hs(this)">Bat Rating</th><th data-t="pt" data-c="2" data-x="0" onclick="hs(this)">Pit Rating</th><th data-t="pt" data-c="3" data-x="0" onclick="hs(this)">Total</th></tr></thead><tbody id="pb"></tbody></table></div></div></div><div id="pg-teams" class="page"><div class="eyebrow">Roster Deep Dive</div><div class="ptitle">Teams</div><div class="psub">Season totals and metrics by owner</div><div class="tsel" id="tsel"></div><div id="tdsp"></div><div id="player-tables"></div></div><div id="pg-stats" class="page"><div class="eyebrow">Detailed Statistics</div><div class="ptitle">Stats</div><div class="psub">Fantasy points, raw stats, rankings, z-scores, and advanced metrics &mdash; click any column to sort</div><div class="tabs"><button class="tb ta" onclick="showTab('pit',this)">Pitcher Stats</button><button class="tb" onclick="showTab('bat',this)">Batter Stats</button></div><div id="tp-pit" class="tp active"><div id="pit-c"></div></div><div id="tp-bat" class="tp"><div id="bat-c"></div></div></div><div id="pg-players" class="page"><div class="eyebrow">League-Wide Roster</div><div class="ptitle">Players</div><div class="psub">All players across every team &mdash; click a column to sort, click an owner to highlight</div><div class="tabs"><button class="tb ta" onclick="showTab('pl-bat',this)">Hitters</button><button class="tb" onclick="showTab('pl-pit',this)">Pitchers</button></div><div id="tp-pl-bat" class="tp active"><div class="ofilt" id="pl-bat-filt"></div><div class="card" style="padding:0;overflow:hidden"><div style="overflow-x:auto"><table class="dt" id="pl-bat-tbl" style="font-size:12px"><thead></thead><tbody></tbody></table></div></div></div><div id="tp-pl-pit" class="tp"><div class="ofilt" id="pl-pit-filt"></div><div class="ctitle" style="margin-bottom:0.5rem;margin-top:0">Starters</div><div class="card mb2" style="padding:0;overflow:hidden"><div style="overflow-x:auto"><table class="dt" id="pl-sp-tbl" style="font-size:12px"><thead></thead><tbody></tbody></table></div></div><div class="ctitle" style="margin-bottom:0.5rem">Relievers</div><div class="card" style="padding:0;overflow:hidden"><div style="overflow-x:auto"><table class="dt" id="pl-rp-tbl" style="font-size:12px"><thead></thead><tbody></tbody></table></div></div></div></main><script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
 const LD={"Pat": {"display": "Chicks Dig The Holds", "w": 6, "l": 2, "pf": 2559, "pa": 2313, "batters": 1204, "pitchers": 1030, "luck": 77.3, "pyth": 5.143, "owner": "Pat", "perfBat": 87.9, "perfPit": 87.3, "perfTot": 97.6}, "Sal": {"display": "Deez Nuts", "w": 4, "l": 4, "pf": 2335, "pa": 2361, "batters": 1212, "pitchers": 780, "luck": 54.6, "pyth": 3.857, "owner": "Sal", "perfBat": 90.7, "perfPit": 3.1, "perfTot": 18.1}, "Charlie": {"display": "Dirty Meat Swing", "w": 5, "l": 3, "pf": 2259, "pa": 2240, "batters": 1015, "pitchers": 954, "luck": 100.0, "pyth": 3.429, "owner": "Charlie", "perfBat": 2.4, "perfPit": 59.0, "perfTot": 11.6}, "Fur": {"display": "Frank Latera", "w": 3, "l": 5, "pf": 2365, "pa": 2426, "batters": 1164, "pitchers": 897, "luck": 36.4, "pyth": 3.429, "owner": "Fur", "perfBat": 69.2, "perfPit": 32.2, "perfTot": 46.0}, "Oded": {"display": "Santolos", "w": 3, "l": 5, "pf": 2347, "pa": 2462, "batters": 1086, "pitchers": 1005, "luck": 31.8, "pyth": 3.571, "owner": "Oded", "perfBat": 21.6, "perfPit": 79.9, "perfTot": 60.7}, "Jimmy": {"display": "Team Mush", "w": 3, "l": 5, "pf": 2453, "pa": 2480, "batters": 1116, "pitchers": 1028, "luck": 0.0, "pyth": 4.571, "owner": "Jimmy", "perfBat": 38.2, "perfPit": 86.8, "perfTot": 81.6}, "Phil": {"display": "Tony's Calling", "w": 5, "l": 3, "pf": 2353, "pa": 2295, "batters": 1134, "pitchers": 936, "luck": 95.5, "pyth": 3.571, "owner": "Phil", "perfBat": 50.0, "perfPit": 50.2, "perfTot": 50.3}, "Marz": {"display": "YOU ALWAYS DO THIS!", "w": 3, "l": 5, "pf": 2299, "pa": 2393, "batters": 1138, "pitchers": 852, "luck": 22.7, "pyth": 3.857, "owner": "Marz", "perfBat": 52.7, "perfPit": 15.8, "perfTot": 17.0}};
 const WD={"Pat": [216, 382, 309, 323, 348, 377, 285, 319], "Sal": [161, 272, 336, 338, 317, 286, 302, 323], "Charlie": [214, 290, 263, 375, 298, 294, 249, 276], "Fur": [140, 376, 374, 258, 274, 344, 280, 319], "Oded": [177, 284, 336, 369, 312, 262, 314, 293], "Jimmy": [132, 342, 367, 332, 338, 261, 336, 345], "Phil": [208, 257, 304, 324, 308, 262, 330, 360], "Marz": [172, 308, 255, 369, 227, 265, 379, 324]};
@@ -309,9 +309,9 @@ function buildCards(){
   document.getElementById('sc').innerHTML=
     mkCard('Best Record',bstW,LD[bstW].w+'-'+LD[bstW].l+' record',LD[bstW].display,'var(--red)')+
     mkCard('Pyth W Leader',byPy[0],LD[byPy[0]].pyth.toFixed(2)+' exp wins',LD[byPy[0]].display,'var(--gold)')+
-    mkCard('Points Leader',byPF[0],LD[byPF[0]].pf.toLocaleString()+' pts',LD[byPF[0]].display,'var(--navy)')+
-    mkCard('Best Hitters',byBt[0],LD[byBt[0]].batters.toLocaleString()+' bat pts',LD[byBt[0]].display,'var(--navy2)')+
-    mkCard('Best Pitchers',byPt[0],LD[byPt[0]].pitchers.toLocaleString()+' pit pts',LD[byPt[0]].display,'var(--red2)');
+    mkCard('Points Leader',byPF[0],LD[byPF[0]].pf.toLocaleString()+' points',LD[byPF[0]].display,'var(--navy)')+
+    mkCard('Best Batters',byBt[0],LD[byBt[0]].batters.toLocaleString()+' batter points',LD[byBt[0]].display,'var(--navy2)')+
+    mkCard('Best Pitchers',byPt[0],LD[byPt[0]].pitchers.toLocaleString()+' pitcher points',LD[byPt[0]].display,'var(--red2)');
 }
 function mkCard(lbl,val,s1,s2,c){
   return '<div class="sc" style="border-top-color:'+c+'"><div class="slabel">'+lbl+'</div>'+
@@ -517,7 +517,7 @@ function buildPyth(){
     ]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:true,labels:{boxWidth:12,font:{family:'Roboto Condensed',size:11}}}},
-      scales:{y:{min:0,max:5,grid:{color:'#e5e0d8'}},x:{grid:{display:false}}}}
+      scales:{y:{min:0,ticks:{stepSize:1},grid:{color:'#e5e0d8'}},x:{grid:{display:false}}}}
   });
 }
 
@@ -697,7 +697,7 @@ function showPage(id,lnk){
   document.querySelectorAll('nav a').forEach(function(a){a.classList.remove('active');});
   document.getElementById('pg-'+id).classList.add('active');
   lnk.classList.add('active');
-  if(id==='standings'){buildPfPaQuad();}
+  if(id==='standings'){;}
   if(id==='weekly'){buildWeekly();buildWkRanks();buildMatchups();}
   if(id==='analytics'){buildLuck();buildPyth();buildQuad();buildPerf();}
   if(id==='teams'){buildTeams();}
@@ -727,7 +727,7 @@ selTeam = function(btn) {
 // Override buildStats to apply adv heat after render
 buildCards();
 buildStandings();
-buildPfPaQuad();
+;
 
 
 // ============================================================
@@ -957,70 +957,24 @@ function renderRPTable(data) {
 }
 
 
-function buildPfPaQuad(){
-  dc('pfpaq');
-  var pf_vals=OWNERS.map(function(o){return LD[o].pf;});
-  var pa_vals=OWNERS.map(function(o){return LD[o].pa;});
-  var avg_pf=pf_vals.reduce(function(a,b){return a+b;},0)/pf_vals.length;
-  var avg_pa=pa_vals.reduce(function(a,b){return a+b;},0)/pa_vals.length;
-  var pad_pf=(Math.max.apply(null,pf_vals)-Math.min.apply(null,pf_vals))*0.08;
-  var pad_pa=(Math.max.apply(null,pa_vals)-Math.min.apply(null,pa_vals))*0.08;
-  var min_pf=Math.min.apply(null,pf_vals)-pad_pf;
-  var max_pf=Math.max.apply(null,pf_vals)+pad_pf;
-  var min_pa=Math.min.apply(null,pa_vals)-pad_pa;
-  var max_pa=Math.max.apply(null,pa_vals)+pad_pa;
 
-  var qbg2={id:'qbg2',beforeDraw:function(ch){
-    var ca=ch.chartArea,sx=ch.scales.x,sy=ch.scales.y,ctx=ch.ctx;
-    var mx=sx.getPixelForValue(avg_pa),my=sy.getPixelForValue(avg_pf);
-    ctx.save();
-    // High PF / Low PA = top-left = green (dominant)
-    ctx.fillStyle='rgba(21,128,61,.15)';ctx.fillRect(ca.left,ca.top,mx-ca.left,my-ca.top);
-    // Low PF / Low PA = bottom-left = amber (lucky)
-    ctx.fillStyle='rgba(184,151,74,.15)';ctx.fillRect(ca.left,my,mx-ca.left,ca.bottom-my);
-    // High PF / High PA = top-right = blue (unlucky)
-    ctx.fillStyle='rgba(3,105,161,.15)';ctx.fillRect(mx,ca.top,ca.right-mx,my-ca.top);
-    // Low PF / High PA = bottom-right = red (struggling)
-    ctx.fillStyle='rgba(200,16,46,.15)';ctx.fillRect(mx,my,ca.right-mx,ca.bottom-my);
-    ctx.strokeStyle='rgba(0,0,0,.15)';ctx.lineWidth=1;ctx.setLineDash([4,4]);
-    ctx.beginPath();ctx.moveTo(mx,ca.top);ctx.lineTo(mx,ca.bottom);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(ca.left,my);ctx.lineTo(ca.right,my);ctx.stroke();
-    ctx.setLineDash([]);ctx.restore();
-  }};
-  var olbl2={id:'olbl2',afterDatasetsDraw:function(ch){
-    var ctx=ch.ctx;
-    ch.data.datasets.forEach(function(ds,i){
-      var meta=ch.getDatasetMeta(i);
-      if(!meta.hidden&&meta.data.length){
-        var pt=meta.data[0];
-        ctx.save();ctx.font="bold 10px 'Roboto Condensed',sans-serif";
-        ctx.fillStyle=ds.borderColor;ctx.fillText(ds.label,pt.x+7,pt.y-5);ctx.restore();
-      }
-    });
-  }};
-  // plugins scoped inline to this chart only - do NOT register globally
-  CH.pfpaq=new Chart(document.getElementById('pfpa-quad').getContext('2d'),{
-    plugins:[qbg2, olbl2],
-    type:'scatter',
-    data:{datasets:OWNERS.map(function(o,i){return{label:o,data:[{x:LD[o].pa,y:LD[o].pf}],backgroundColor:CLR[i]+'dd',borderColor:CLR[i],pointRadius:10,pointHoverRadius:13};})},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},
-        tooltip:{callbacks:{label:function(c){return c.dataset.label+' | PF: '+c.parsed.y+' | PA: '+c.parsed.x;}}}},
-      scales:{
-        x:{min:min_pa,max:max_pa,title:{display:true,text:'Points Against',color:'#6b7280'},grid:{color:'#e5e0d8'}},
-        y:{min:min_pf,max:max_pf,title:{display:true,text:'Points For',color:'#6b7280'},grid:{color:'#e5e0d8'}}
-      }}
-  });
-}
 
 (function(){
   // Populate last-updated timestamp from the injected update time
   var ts = typeof LAST_UPDATED !== 'undefined' ? LAST_UPDATED : '';
   if (ts) {
+    // Convert UTC timestamp to browser's local time
+    var displayTs = ts;
+    try {
+      var d = new Date(ts.replace(' UTC','Z').replace(' ','T').replace(' ','T'));
+      if (!isNaN(d.getTime())) {
+        displayTs = d.toLocaleTimeString([], {hour:'numeric',minute:'2-digit',timeZoneName:'short'});
+      }
+    } catch(e) {}
     var el = document.getElementById('last-updated');
-    if (el) el.textContent = 'Last updated: ' + ts;
+    if (el) el.textContent = 'Last updated: ' + displayTs;
     var sub = document.getElementById('sub-timestamp');
-    if (sub) sub.textContent = ts;
+    if (sub) sub.textContent = displayTs;
   }
 })();
 
