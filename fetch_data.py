@@ -450,11 +450,10 @@ def compute_stats_tables(bat_raw_by_owner, pit_raw_by_owner, bat_pts, pit_pts):
     # -- BATTERS --------------------------------------------------
     def bat_fp(o):
         r  = bat_raw_by_owner.get(o, {})
-        h  = sf(r.get("H",  0))
+        b1 = sf(r.get("1B", 0))  # headtoheadstats returns 1B directly
         b2 = sf(r.get("2B", 0))
         b3 = sf(r.get("3B", 0))
         hr = sf(r.get("HR", 0))
-        b1 = max(0, h - b2 - b3 - hr)
         rv  = sf(r.get("R",   0))
         rbi = sf(r.get("RBI", 0))
         sb  = sf(r.get("SB",  0))
@@ -480,11 +479,10 @@ def compute_stats_tables(bat_raw_by_owner, pit_raw_by_owner, bat_pts, pit_pts):
 
     def bat_raw_r(o):
         r  = bat_raw_by_owner.get(o, {})
-        h  = sf(r.get("H",  0))
+        b1 = sf(r.get("1B", 0))  # headtoheadstats returns 1B directly
         b2 = sf(r.get("2B", 0))
         b3 = sf(r.get("3B", 0))
         hr = sf(r.get("HR", 0))
-        b1 = max(0, h - b2 - b3 - hr)
         return {"owner": o, "display": disp(o),
                 "r":   int(sf(r.get("R",   0))),
                 "b1":  int(b1),
