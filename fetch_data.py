@@ -134,6 +134,8 @@ DISPLAYS = {
 OWNERS = list(dict.fromkeys(OWNER_MAP.values()))  # unique, preserves order
 
 # Google Sheets CSV URLs (published tabs)
+GSHEET_HISTORY_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRuIRTB6DRie15rWpcso6y74CHqDs9FERRUPXh0i2xPcHCyjGH4toaSMIUOPSUQNnglfGOnlujLmnwJ/pub?gid=0&single=true&output=csv"
+
 GSHEET_WEEKLY_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQsb7MdNr-Ri6GDZ4HQ0pgpAypFhc6AxTygRRz6YotzO9dLVq4iTOqtxBSqgR2T_bmwR87Mf04Dy2G0/pub?gid=1444854659&single=true&output=csv"
 GSHEET_BAT_URL    = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQsb7MdNr-Ri6GDZ4HQ0pgpAypFhc6AxTygRRz6YotzO9dLVq4iTOqtxBSqgR2T_bmwR87Mf04Dy2G0/pub?gid=463514361&single=true&output=csv"
 GSHEET_PIT_URL    = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQsb7MdNr-Ri6GDZ4HQ0pgpAypFhc6AxTygRRz6YotzO9dLVq4iTOqtxBSqgR2T_bmwR87Mf04Dy2G0/pub?gid=1754975328&single=true&output=csv"
@@ -660,7 +662,7 @@ def fetch_weekly_from_gsheets():
         for k, v in TEAM_TO_OWNER.items():
             if k.lower() in name.lower() or name.lower() in k.lower():
                 return v
-        # Fuzzy: first 4 chars (catches "Deez Nuts" vs "Deez 🥜" vs any Deez variant)
+        # Fuzzy: first 4 chars (catches "Deez Nuts" vs "Deez \U0001f95c" vs any Deez variant)
         name_prefix = name.lower()[:4]
         for k, v in TEAM_TO_OWNER.items():
             if k.lower()[:4] == name_prefix:
@@ -881,10 +883,65 @@ def fetch_player_stats_from_gsheets():
     return batters, pitchers
 
 
+def fetch_history_from_gsheets():
+    """
+    Fetch all-time league history from published Google Sheets CSV.
+    Columns: Year, Active, Manager, Team Name, Wins, Losses, Points,
+             Playoff Finish, Reg Season Rank, Win %, League Average,
+             Champion, Runner-Up, Playoff
+    Returns list of dicts ready to inject as HIST_DATA.
+    """
+    print("\n[League History -- Google Sheets]")
+    r = requests.get(GSHEET_HISTORY_URL, timeout=20)
+    print("  " + str(r.status_code) + " (" + str(len(r.text)) + " bytes)")
+
+    if r.status_code != 200:
+        print("  WARNING: Could not fetch history CSV (HTTP " + str(r.status_code) + ")")
+        return None
+
+    rows = list(csv.reader(io.StringIO(r.text)))
+    if len(rows) < 2:
+        print("  WARNING: History CSV is empty")
+        return None
+
+    # Normalize header names to safe JS keys
+    raw_hdrs = [h.strip() for h in rows[0]]
+    KEY_MAP = {
+        "Year":            "year",
+        "Active":          "active",
+        "Manager":         "manager",
+        "Team Name":       "team_name",
+        "Wins":            "wins",
+        "Losses":          "losses",
+        "Points":          "points",
+        "Playoff Finish":  "playoff_finish",
+        "Reg Season Rank": "reg_season_rank",
+        "Win %":           "win_pct",
+        "League Average":  "league_average",
+        "Champion":        "champion",
+        "Runner-Up":       "runner_up",
+        "Playoff":         "playoff",
+    }
+    hdrs = [KEY_MAP.get(h, h.lower().replace(" ", "_")) for h in raw_hdrs]
+
+    data = []
+    for row in rows[1:]:
+        if not any(v.strip() for v in row): continue
+        d = {}
+        for i, key in enumerate(hdrs):
+            d[key] = row[i].strip() if i < len(row) else ""
+        if d.get("year") and d.get("manager"):
+            data.append(d)
+
+    print("  Parsed " + str(len(data)) + " history rows across " +
+          str(len(set(r["year"] for r in data))) + " seasons")
+    return data
+
+
 # ----------------------------------------------------------------
 # UPDATE HTML
 # ----------------------------------------------------------------
-def update_html(league, stats_tables, player_bat=None, player_pit=None):
+def update_html(league, stats_tables, player_bat=None, player_pit=None, hist_data=None):
     print("\n[Updating HTML]")
     candidates = ["barry_ballstein.html"] + glob.glob("barry_ballstein*.html")
     html_path  = next((f for f in candidates if os.path.exists(f)), None)
@@ -894,6 +951,8 @@ def update_html(league, stats_tables, player_bat=None, player_pit=None):
     with open(html_path, "r", encoding="utf-8") as f:
         html = f.read()
 
+    if hist_data is not None:
+        html = inject_js_var(html, "var HIST_DATA", hist_data, is_array=True)
     if player_bat is not None and player_pit is not None:
         html = inject_js_var(html, "var PLR",
                              {"batters": player_bat, "pitchers": player_pit})
@@ -967,7 +1026,8 @@ def main():
                                         bat_pts, pit_pts)
 
     player_bat, player_pit = fetch_player_stats_from_gsheets()
-    update_html(league, stats_tables, player_bat, player_pit)
+    hist_data = fetch_history_from_gsheets()
+    update_html(league, stats_tables, player_bat, player_pit, hist_data)
 
     print("\n" + "=" * 60)
     print("Done! Week " + str(CURRENT_WEEK) + " | " + ts)
